@@ -197,11 +197,30 @@ void bmpdisplay()
 
 void colorrectdisplay()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0.0f, 1.0f, 1.0f);
-	glRectf(-0.5f, -0.5f, 0.5f, 0.5f);
-	glFlush();
+	//glClear(GL_COLOR_BUFFER_BIT);
+	//glColor3f(0.0f, 1.0f, 1.0f);
+	//glRectf(-0.5f, -0.5f, 0.5f, 0.5f);
+	//glFlush();
+	//glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+	//glClear(GL_COLOR_BUFFER_BIT);
+	//glColor3f(0.0f, 1.0f, 1.0f);
+	//glRectf(-0.5f, -0.5f, 0.5f, 0.5f);
+	//glFlush();
 
+	int i;
+	glShadeModel(GL_SMOOTH);    // 平滑方式，这也是默认方式
+	//glShadeModel(GL_FLAT);      // 单色方式
+	glClear(GL_COLOR_BUFFER_BIT);
+	glBegin(GL_TRIANGLE_FAN);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glVertex2f(0.0f, 0.0f);
+	for(i=0; i<=8; ++i)
+	{
+		glColor3f(i&0x04, i&0x02, i&0x01);
+		glVertex2f(cos(i*Pi/4), sin(i*Pi/4));
+	}
+	glEnd();
+	glFlush();
 }
 
 
@@ -225,18 +244,18 @@ void mycolortowDisplay()
 }
 int main(int argc, char * argv[])
 {
-	//FirstGL * fi = new FirstGL(argc, argv);
-	//glutDisplayFunc(&colorrectdisplay);
-	//glutMainLoop();
+	FirstGL * fi = new FirstGL(argc, argv);
+	glutDisplayFunc(&colorrectdisplay);
+	glutMainLoop();
 
 
 
-	auxInitDisplayMode(AUX_SINGLE | AUX_INDEX);
-	auxInitPosition(100, 100, 400, 400);
-	auxInitWindow(L"");
-	mycolortowDisplay();
-	//Sleep(10 * 1000);
-	system("pause");
+	//auxInitDisplayMode(AUX_SINGLE | AUX_INDEX);
+	//auxInitPosition(100, 100, 400, 400);
+	//auxInitWindow(L"");
+	//mycolortowDisplay();
+	////Sleep(10 * 1000);
+	//system("pause");
 
 	return 0;
 }
