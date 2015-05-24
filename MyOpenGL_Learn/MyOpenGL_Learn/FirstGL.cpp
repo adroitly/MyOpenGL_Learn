@@ -11,13 +11,14 @@ FirstGL::FirstGL(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
 
-	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	//glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 
 	glutInitWindowPosition(100, 100);
 
 	glutInitWindowSize(400, 400);
 
-	glutCreateWindow("第一个OpenGL程序");
+	glutCreateWindow("OpenGL");
 
 	//glutDisplayFunc(&this->myDisplay);
 	//glClear(GL_COLOR_BUFFER_BIT);

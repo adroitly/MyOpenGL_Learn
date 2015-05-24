@@ -2,11 +2,13 @@
 #include "windows.h"
 #include "FirstGL.h"
 #include "stdio.h"
+#include "time.h"
 #include "stdlib.h"
 #include "iostream"
 #include <math.h>
 #include <GL/gl.h>
 #include "GL/GLAUX.H"
+
 
 #pragma comment (lib, "opengl32.lib")
 #pragma comment (lib, "glut.lib")
@@ -242,52 +244,117 @@ void mycolortowDisplay()
      glEnd();
      glFlush();
 }
+
+double CalFrequency()
+{
+	static int count;
+	static double save;
+	static clock_t last, current;
+	double timegap;
+
+	++count;
+	if( count <= 50 )
+		return save;
+	count = 0;
+	last = current;
+	current = clock();
+	timegap = (current-last)/(double)CLK_TCK;
+	save = 50.0/timegap;
+	return save;
+}
 // 太阳、地球和月亮
 // 假设每个月都是30天
 // 一年12个月，共是360天
 static int day = 359; // day的变化：从0到359
+#define WIDTH 400
+#define HEIGHT 400
+
+static GLfloat angle = 0.0f;
 void earthdisplay(void)
 {
-	glEnable(GL_DEPTH_TEST);
+	double FPS = CalFrequency();
+	printf("FPS = %f\n", FPS);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// 创建透视效果视图
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(75, 1, 1, 400000000);
+	gluPerspective(90.0f, 1.0f, 1.0f, 20.0f);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0, -200000000, 200000000, 0, 0, 0, 0, 0, 1);
+	gluLookAt(0.0, 5.0, -10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-	// 绘制红色的“太阳”
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glutSolidSphere(69600000, 20, 20);
-	// 绘制蓝色的“地球”
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glRotatef(day/360.0*360.0, 0.0f, 0.0f, -1.0f);
-	glTranslatef(150000000, 0.0f, 0.0f);
-	glutSolidSphere(15945000, 20, 20);
-	// 绘制黄色的“月亮”
-	glColor3f(1.0f, 1.0f, 0.0f);
-	glRotatef(day/30.0*360.0 - day/360.0*360.0, 0.0f, 0.0f, -1.0f);
-	glTranslatef(38000000, 0.0f, 0.0f);
-	glutSolidSphere(4345000, 20, 20);
+	// 定义太阳光源，它是一种白色的光源
+	{
+		GLfloat sun_light_position[] = {0.0f, 0.0f, 0.0f, 1.0f};
+		GLfloat sun_light_ambient[]   = {0.0f, 0.0f, 0.0f, 1.0f};
+		GLfloat sun_light_diffuse[]   = {1.0f, 1.0f, 1.0f, 1.0f};
+		GLfloat sun_light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-	glFlush();
+		glLightfv(GL_LIGHT0, GL_POSITION, sun_light_position);
+		glLightfv(GL_LIGHT0, GL_AMBIENT,   sun_light_ambient);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE,   sun_light_diffuse);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, sun_light_specular);
+
+		glEnable(GL_LIGHT0);
+		glEnable(GL_LIGHTING);
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	// 定义太阳的材质并绘制太阳
+	{
+		GLfloat sun_mat_ambient[]   = {0.0f, 0.0f, 0.0f, 1.0f};
+		GLfloat sun_mat_diffuse[]   = {0.0f, 0.0f, 0.0f, 1.0f};
+		GLfloat sun_mat_specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
+		GLfloat sun_mat_emission[] = {0.5f, 0.0f, 0.0f, 1.0f};
+		GLfloat sun_mat_shininess   = 0.0f;
+
+		glMaterialfv(GL_FRONT, GL_AMBIENT,    sun_mat_ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE,    sun_mat_diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR,   sun_mat_specular);
+		glMaterialfv(GL_FRONT, GL_EMISSION,   sun_mat_emission);
+		glMaterialf (GL_FRONT, GL_SHININESS, sun_mat_shininess);
+
+		glutSolidSphere(2.0, 40, 32);
+	}
+
+	// 定义地球的材质并绘制地球
+	{
+		GLfloat earth_mat_ambient[]   = {0.0f, 0.0f, 0.5f, 1.0f};
+		GLfloat earth_mat_diffuse[]   = {0.0f, 0.0f, 0.5f, 1.0f};
+		GLfloat earth_mat_specular[] = {0.0f, 0.0f, 1.0f, 1.0f};
+		GLfloat earth_mat_emission[] = {0.0f, 0.0f, 0.0f, 1.0f};
+		GLfloat earth_mat_shininess   = 30.0f;
+
+		glMaterialfv(GL_FRONT, GL_AMBIENT,    earth_mat_ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE,    earth_mat_diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR,   earth_mat_specular);
+		glMaterialfv(GL_FRONT, GL_EMISSION,   earth_mat_emission);
+		glMaterialf (GL_FRONT, GL_SHININESS, earth_mat_shininess);
+
+		glRotatef(angle, 0.0f, -1.0f, 0.0f);
+		glTranslatef(5.0f, 0.0f, 0.0f);
+		glutSolidSphere(2.0, 40, 32);
+	}
+
 	glutSwapBuffers();
 }
 void myIdle(void)
 {
-	/* 新的函数，在空闲时调用，作用是把日期往后移动一天并重新绘制，达到动画效果 */
-	++day;
-	if( day >= 360 )
-		day = 0;
+	//++day;
+	//if( day >= 360 )
+	//	day = 0;
+	angle += 1.0f;
+	if( angle >= 360.0f )
+		angle = 0.0f;
 	earthdisplay();
 }
 int main(int argc, char * argv[])
 {
 	FirstGL * fi = new FirstGL(argc, argv);
 	glutDisplayFunc(&earthdisplay);
-	glutIdleFunc(&myIdle);                // 新加入了这句
+	glutIdleFunc(&myIdle);      
 	glutMainLoop();
 
 
