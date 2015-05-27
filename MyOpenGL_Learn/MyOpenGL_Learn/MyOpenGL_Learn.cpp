@@ -765,6 +765,54 @@ GLuint load_texture(char * file_name)
 	fclose(pFile);
 	return texture_ID;
 }
+/* 将当前纹理BGR格式转换为BGRA格式
+* 纹理中像素的RGB值如果与指定rgb相差不超过absolute，则将Alpha设置为0.0，否则设置为1.0
+*/
+void texture_colorkey(GLubyte r, GLubyte g, GLubyte b, GLubyte absolute)
+{
+
+	GLint width, height;
+
+	GLubyte * pixels = 0;
+
+
+	//获取纹理大小
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D , 0 , GL_TEXTURE_HEIGHT , & height);
+
+	pixels = (GLubyte *)malloc(width * height * 4);
+	if (pixels == 0)
+	{
+		return;
+	}
+
+	glGetTexImage(GL_TEXTURE_2D , 0 , GL_BGRA_EXT , GL_UNSIGNED_BYTE , pixels);
+
+	// 修改像素中的Alpha值
+	// 其中pixels[i*4], pixels[i*4+1], pixels[i*4+2], pixels[i*4+3]
+	//    分别表示第i个像素的蓝、绿、红、Alpha四种分量，0表示最小，255表示最大
+	{
+
+		GLint i;
+		GLint count = width * height;
+		for(i = 0 ; i < count ; ++ i)
+		{
+
+			if (abs(pixels[i * 4] - b ) <= absolute && abs(pixels[i*4+1] - g) <= absolute
+				&& abs(pixels[i*4+2] - r) <= absolute )
+			{
+				pixels[i * 4 + 3] = 0;
+			}
+			else
+			{
+				pixels[ i * 4 + 3] = 255;
+			}
+		}
+	}
+	 // 将修改后的像素重新设置到纹理中，释放内存
+	glTexImage2D(GL_TEXTURE_2D , 0 , GL_RGBA , width , height , 0 , GL_BGRA_EXT , GL_UNSIGNED_BYTE , pixels);
+	free(pixels);
+}
 /* 两个纹理对象的编号
 */
 GLuint texGround;
@@ -830,6 +878,52 @@ void useTexture_display()
 	// 交换缓冲区，并保存像素数据到文件
 	glutSwapBuffers();
 	grab();
+}
+void Alphadisplay(void)
+{
+	static int initialized    = 0;
+	static GLuint texWindow   = 0;
+	static GLuint texPicture = 0;
+
+	// 执行初始化操作，包括：读取相片，读取相框，将相框由BGR颜色转换为BGRA，启用二维纹理
+	if( !initialized )
+	{
+		texPicture = load_texture("pic.bmp");
+		texWindow   = load_texture("window.bmp");
+		glBindTexture(GL_TEXTURE_2D, texWindow);
+		texture_colorkey(255, 255, 255, 10);
+
+		glEnable(GL_TEXTURE_2D);
+
+		initialized = 1;
+	}
+
+	// 清除屏幕
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// 绘制相片，此时不需要进行Alpha测试，所有的像素都进行绘制
+	glBindTexture(GL_TEXTURE_2D, texPicture);
+	glDisable(GL_ALPHA_TEST);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);      glVertex2f(-1.0f, -1.0f);
+	glTexCoord2f(0, 1);      glVertex2f(-1.0f,   1.0f);
+	glTexCoord2f(1, 1);      glVertex2f( 1.0f,   1.0f);
+	glTexCoord2f(1, 0);      glVertex2f( 1.0f, -1.0f);
+	glEnd();
+
+	// 绘制相框，此时进行Alpha测试，只绘制不透明部分的像素
+	glBindTexture(GL_TEXTURE_2D, texWindow);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.5f);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);      glVertex2f(-1.0f, -1.0f);
+	glTexCoord2f(0, 1);      glVertex2f(-1.0f,   1.0f);
+	glTexCoord2f(1, 1);      glVertex2f( 1.0f,   1.0f);
+	glTexCoord2f(1, 0);      glVertex2f( 1.0f, -1.0f);
+	glEnd();
+
+	// 交换缓冲
+	glutSwapBuffers();
 }
 int main(int argc, char * argv[])
 {

@@ -1,4 +1,4 @@
-﻿生成启动时间为 2015/5/26 21:12:07。
+﻿生成启动时间为 2015/5/27 20:32:55。
      1>项目“E:\OpenGL\MyLearn\MyOpenGL_Learn\MyOpenGL_Learn\MyOpenGL_Learn\OpenGL_Single.vcxproj”在节点 2 上(Build 个目标)。
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\MyOpenGL_Learn.pch" /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt MyOpenGL_Learn.cpp
@@ -12,4 +12,4 @@
 
 生成成功。
 
-已用时间 00:00:01.20
+已用时间 00:00:02.83
