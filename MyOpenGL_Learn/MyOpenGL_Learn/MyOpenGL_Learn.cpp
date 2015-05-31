@@ -924,18 +924,19 @@ void Alphadisplay(void)
 
 	// 交换缓冲
 	glutSwapBuffers();
+	grab();
 }
 int main(int argc, char * argv[])
 {
 	//openfile("dummy.bmp");
 	FirstGL * fi = new FirstGL(argc, argv);
-	glutDisplayFunc(&useTexture_display);
+	glutDisplayFunc(&Alphadisplay);
 	////glutIdleFunc(&myIdle);    
 	// 在这里做一些初始化
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	texGround = load_texture("ground.bmp");
-	texWall = load_texture("wall.bmp");
+	//glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_TEXTURE_2D);
+	//texGround = load_texture("ground.bmp");
+	//texWall = load_texture("wall.bmp");
 	glutMainLoop();
 	 //free(PixelData);
 	//Shell(argc , argv);
