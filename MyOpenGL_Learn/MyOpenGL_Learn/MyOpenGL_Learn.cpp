@@ -26,8 +26,9 @@ using namespace std;
 const int n = 200;
 const GLfloat R = 0.5f;
 const GLfloat Pi = 3.1415926536f;
-void grab(void)
+void grab(const char * _filename)
 {
+
 	FILE*     pDummyFile;
 	FILE*     pWritingFile;
 	GLubyte* pPixelData;
@@ -51,10 +52,11 @@ void grab(void)
 	if( pDummyFile == 0 )
 		exit(0);
 
-	pWritingFile = fopen("grab.bmp", "wb");
+	pWritingFile = fopen(_filename, "wb");
 	if( pWritingFile == 0 )
 		exit(0);
-
+	//读取前面的
+	glReadBuffer(GL_FRONT);
 	// 读取像素
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glReadPixels(0, 0, WindowWidth, WindowHeight,
@@ -537,7 +539,7 @@ void mydisplay3dCral()
 	glDepthMask(GL_TRUE);
 
 	glutSwapBuffers();
-	grab();
+	grab("mydisplay3dCral.bmp");
 }
 void hunheRect()
 {
@@ -555,7 +557,7 @@ void hunheRect()
 	glRectf(-0.5, -0.5, 1, 1);
 
 	glutSwapBuffers();
-	grab();
+	grab("hunheRect.bmp");
 }
 void myIdle(void)
 {
@@ -636,7 +638,7 @@ void savedisplay()
 
 	// 完成绘制，并抓取图象保存为BMP文件
 	glutSwapBuffers();
-	grab();
+	grab("saveTest.bmp");
 }
 int power_of_two(int n)
 {
@@ -877,7 +879,7 @@ void useTexture_display()
 
 	// 交换缓冲区，并保存像素数据到文件
 	glutSwapBuffers();
-	grab();
+	grab("useTexture.bmp");
 }
 void Alphadisplay(void)
 {
@@ -924,13 +926,90 @@ void Alphadisplay(void)
 
 	// 交换缓冲
 	glutSwapBuffers();
-	grab();
+	grab("Alpha.bmp");
 }
+
+void draw_sphere()
+{
+
+	// 设置光源
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	{
+
+		GLfloat pos[]  = {5.0f, 5.0f, 0.0f, 1.0f},
+			ambient[] = {0.0f, 0.0f, 1.0f, 1.0f};
+		glLightfv(GL_LIGHT0 , GL_POSITION , pos);
+		glLightfv(GL_LIGHT0 , GL_AMBIENT , ambient);
+
+	}
+
+	//绘制一个球体
+	glColor3f(1 , 0 , 0);
+	glPushMatrix();
+	glTranslatef(0 , 0 , 2);
+	glutSolidSphere(0.5 , 20 , 20);
+	glPopMatrix();
+}
+
+void modeldisplay()
+{
+
+	// 清除屏幕
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// 设置观察点
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60, 1, 5, 25);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(5, 0, 6.5, 0, 0, 0, 0, 1, 0);
+
+	glEnable(GL_DEPTH_TEST);
+
+	// 绘制球体
+	glDisable(GL_STENCIL_TEST);
+	draw_sphere();
+
+	// 绘制一个平面镜。在绘制的同时注意设置模板缓冲。
+	// 另外，为了保证平面镜之后的镜像能够正确绘制，在绘制平面镜时需要将深度缓冲区设置为只读的。
+	// 在绘制时暂时关闭光照效果
+	glClearStencil(0);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glEnable(GL_STENCIL_TEST);
+
+	glDisable(GL_LIGHTING);
+	glColor3f(0.5f, 0.5f, 0.5f);
+	glDepthMask(GL_FALSE);
+	glRectf(-1.5f, -1.5f, 1.5f, 1.5f);
+	glDepthMask(GL_TRUE);
+
+	// 绘制一个与先前球体关于平面镜对称的球体，注意光源的位置也要发生对称改变
+	// 因为平面镜是在X轴和Y轴所确定的平面，所以只要Z坐标取反即可实现对称
+	// 为了保证球体的绘制范围被限制在平面镜内部，使用模板测试
+	glStencilFunc(GL_EQUAL, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glScalef(1.0f, 1.0f, -1.0f);
+	draw_sphere();
+
+	// 交换缓冲
+	glutSwapBuffers();
+
+	// 截图
+	grab("modeldisplay.bmp");
+
+}
+
 int main(int argc, char * argv[])
 {
 	//openfile("dummy.bmp");
+	const char* version = (const char*)glGetString(GL_VERSION);
+	printf("OpenGL 版本：%s\n", version);
 	FirstGL * fi = new FirstGL(argc, argv);
-	glutDisplayFunc(&Alphadisplay);
+	glutDisplayFunc(&modeldisplay);
 	////glutIdleFunc(&myIdle);    
 	// 在这里做一些初始化
 	//glEnable(GL_DEPTH_TEST);
