@@ -20,12 +20,17 @@ using namespace std;
 * 抓取窗口中的像素
 * 假设窗口宽度为WindowWidth，高度为WindowHeight
 */
-#define WindowWidth   400
-#define WindowHeight 400
+float WindowWidth = 400;
+float WindowHeight =  400;
 #define BMP_Header_Length 54
 const int n = 200;
 const GLfloat R = 0.5f;
 const GLfloat Pi = 3.1415926536f;
+void ChangeSize(int w, int h)
+{
+	WindowWidth = w;
+	WindowHeight = h;
+}
 void grab(const char * _filename)
 {
 
@@ -37,6 +42,8 @@ void grab(const char * _filename)
 	GLint     PixelDataLength;
 
 	// 计算像素数据的实际长度
+	//glutReshapeFunc(ChangeSize);
+	//glutInitWindowSize(WindowWidth , WindowHeight);
 	i = WindowWidth * 3;    // 得到每一行的像素数据长度
 	while( i%4 != 0 )       // 补充数据，直到i是的倍数
 		++i;                // 本来还有更快的算法，
@@ -1002,6 +1009,90 @@ void modeldisplay()
 	grab("modeldisplay.bmp");
 
 }
+void drawCNString(const char* str) {
+	int len, i;
+	wchar_t* wstring;
+	HDC hDC = wglGetCurrentDC();
+	GLuint list = glGenLists(1);
+
+	// 计算字符的个数
+	// 如果是双字节字符的（比如中文字符），两个字节才算一个字符
+	// 否则一个字节算一个字符
+	len = 0;
+	for(i=0; str[i]!='\0'; ++i)
+	{
+		if( IsDBCSLeadByte(str[i]) )
+			++i;
+		++len;
+	}
+
+	// 将混合字符转化为宽字符
+	wstring = (wchar_t*)malloc((len+1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str, -1, wstring, len);
+	wstring[len] = L'\0';
+
+	// 逐个输出字符
+	for(i=0; i<len; ++i)
+	{
+		wglUseFontBitmapsW(hDC, wstring[i], 1, list);
+		glCallList(list);
+	}
+
+	// 回收所有临时资源
+	free(wstring);
+	glDeleteLists(list, 1);
+}
+void selectFont(int size, int charset, const char* face) {
+	HFONT hFont = CreateFontA(size, 0, 0, 0, FW_MEDIUM, 0, 0, 0,
+		charset, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, face);
+	HFONT hOldFont = (HFONT)SelectObject(wglGetCurrentDC(), hFont);
+	DeleteObject(hOldFont);
+}
+// ASCII字符总共只有0到127，一共128种字符
+#define MAX_CHAR       128
+
+void drawString(const char* str) {
+	static int isFirstCall = 1;
+	static GLuint lists;
+
+	if( isFirstCall ) { // 如果是第一次调用，执行初始化
+		// 为每一个ASCII字符产生一个显示列表
+		isFirstCall = 0;
+
+		// 申请MAX_CHAR个连续的显示列表编号
+		lists = glGenLists(MAX_CHAR);
+
+		// 把每个字符的绘制命令都装到对应的显示列表中
+		wglUseFontBitmaps(wglGetCurrentDC(), 0, MAX_CHAR, lists);
+	}
+	// 调用每个字符对应的显示列表，绘制每个字符
+	for(; *str!='\0'; ++str)
+		glCallList(lists + *str);
+}
+void DrawTypeface()
+{
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	selectFont(48, ANSI_CHARSET, "Comic Sans MS");
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glRasterPos2f(-0.7f, 0.4f);
+	drawString("Hello, World!");
+
+	selectFont(48, GB2312_CHARSET, "楷体_GB2312");
+	glColor3f(1.0f, 1.0f, 0.0f);
+	glRasterPos2f(-0.7f, -0.1f);
+	drawCNString("当代的中国汉字");
+
+	selectFont(48, DEFAULT_CHARSET, "华文仿宋");
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glRasterPos2f(-0.7f, -0.6f);
+	drawCNString("傳統的中國漢字");
+
+	glutSwapBuffers();
+	grab("DrawTypeface.bmp");
+}
 
 int main(int argc, char * argv[])
 {
@@ -1009,7 +1100,7 @@ int main(int argc, char * argv[])
 	const char* version = (const char*)glGetString(GL_VERSION);
 	printf("OpenGL 版本：%s\n", version);
 	FirstGL * fi = new FirstGL(argc, argv);
-	glutDisplayFunc(&modeldisplay);
+	glutDisplayFunc(&DrawTypeface);
 	////glutIdleFunc(&myIdle);    
 	// 在这里做一些初始化
 	//glEnable(GL_DEPTH_TEST);
